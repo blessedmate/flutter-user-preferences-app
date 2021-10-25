@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:user_preferences_app/src/shared_preferences/user_preferences.dart';
+import 'package:user_preferences_app/src/widgets/menu_widget.dart';
 
 class SettingsPage extends StatefulWidget {
   const SettingsPage({Key? key}) : super(key: key);
@@ -11,31 +12,25 @@ class SettingsPage extends StatefulWidget {
 }
 
 class _SettingsPageState extends State<SettingsPage> {
-  bool _secondaryColor = true;
-  int _gender = 1;
-  String _name = 'John';
+  bool? _secondaryColor;
+  int? _gender;
 
   late TextEditingController _textController;
+
+  final prefs = UserPreferences();
 
   @override
   void initState() {
     super.initState();
-    loadPreferences();
-    _textController = TextEditingController(text: _name);
+    _gender = prefs.gender;
+    _secondaryColor = prefs.secondaryColor;
+    _textController = TextEditingController(text: prefs.username);
+    prefs.lastPage = SettingsPage.routeName;
   }
 
-  loadPreferences() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    _gender = prefs.getInt('gender')!;
-    setState(() {});
-  }
-
-  _setSelectedRadio(int? value) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-
-    await prefs.setInt('gender', _gender);
-
-    _gender = value ?? 1;
+  _setSelectedRadio(int? value) {
+    prefs.gender = value!;
+    _gender = value;
     setState(() {});
   }
 
@@ -44,7 +39,10 @@ class _SettingsPageState extends State<SettingsPage> {
     return Scaffold(
         appBar: AppBar(
           title: const Text('Preferences'),
+          centerTitle: true,
+          backgroundColor: prefs.secondaryColor ? Colors.teal : Colors.blue,
         ),
+        drawer: const Menu(),
         body: ListView(
           children: [
             Container(
@@ -56,11 +54,12 @@ class _SettingsPageState extends State<SettingsPage> {
             ),
             const Divider(),
             SwitchListTile(
-              value: _secondaryColor,
+              value: _secondaryColor!,
               title: const Text('Secondary color'),
               onChanged: (val) {
                 setState(() {
                   _secondaryColor = val;
+                  prefs.secondaryColor = val;
                 });
               },
             ),
@@ -85,7 +84,9 @@ class _SettingsPageState extends State<SettingsPage> {
                   labelText: 'Name',
                   helperText: 'Name of phone user',
                 ),
-                onChanged: (val) {},
+                onChanged: (val) {
+                  prefs.username = val;
+                },
               ),
             ),
           ],
